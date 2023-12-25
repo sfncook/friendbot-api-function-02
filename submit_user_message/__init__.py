@@ -12,8 +12,8 @@ import tempfile
 from datetime import datetime
 
 cors_headers = {
-    "Access-Control-Allow-Origin": "*",  # Replace with your allowed origin(s)
-    "Access-Control-Allow-Methods": "OPTIONS, POST",  # Add other allowed methods if needed
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "OPTIONS, POST, PUT",
     "Access-Control-Allow-Headers": "Content-Type",
 }
 
@@ -279,6 +279,7 @@ def update_user_data(updateconversation, conversation_obj, user_data):
 
 def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages: func.DocumentList, newmessage: func.Out[func.Document], updateconversation: func.Out[func.Document]) -> func.HttpResponse:
     method = req.method
+    logging.info(f"submit_user_message {method}")
 
     if method == 'OPTIONS':
         return func.HttpResponse(headers=cors_headers)
@@ -331,6 +332,7 @@ def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages
             if user_data != {}:
                 update_user_data(updateconversation, conversation_obj, user_data)
 
+            logging.info(f"Response: SUCCESS")
             return func.HttpResponse(
                 status_code=200,
                 headers=cors_headers,
@@ -338,4 +340,5 @@ def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages
                 mimetype="application/json"
             )
     else:
+        logging.info(f"Response: FAILURE")
         return func.HttpResponse("Method not allowed", status_code=405)

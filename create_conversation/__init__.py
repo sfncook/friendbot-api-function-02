@@ -11,6 +11,7 @@ cors_headers = {
 
 def main(req: func.HttpRequest, conversation: func.Out[func.Document]) -> func.HttpResponse:
     method = req.method
+    logging.info(f"create_conversation {method}")
 
     if method == 'OPTIONS':
         return func.HttpResponse(headers=cors_headers)
