@@ -1,33 +1,30 @@
 {
   "bindings": [
     {
+      "authLevel": "anonymous",
+      "name": "req",
       "type": "httpTrigger",
       "direction": "in",
-      "name": "req",
-      "methods": ["get", "post"]
+      "methods": [
+        "get",
+        "post"
+      ]
     },
     {
-      "type": "cosmosDB",
-      "name": "document",
-      "direction": "in",
-      "databaseName": "keli",
-      "collectionName": "conversations",
-      "connectionStringSetting": "AzureCosmosDBConnection",
-      "id": "{Query.id}",
-      "partitionKey": "{Query.partitionKey}"
-    },
-    {
-      "type": "cosmosDB",
-      "name": "outputDocument",
-      "direction": "out",
-      "databaseName": "keli",
-      "collectionName": "conversations",
-      "connectionStringSetting": "AzureCosmosDBConnection"
-    },
-    {
+      "name": "$return",
       "type": "http",
-      "direction": "out",
-      "name": "$return"
+      "direction": "out"
+    },
+    {
+      "name": "todoitems",
+      "direction": "in",
+      "type": "cosmosDB",
+      "connection": "AzureCosmosDBConnection",
+      "databaseName": "keli",
+      "containerName": "conversations",
+      "id": "{id}",
+      "partitionKey": "{id}"
     }
-  ]
+  ],
+  "scriptFile": "__init__.py"
 }
