@@ -10,10 +10,18 @@
     },
     {
       "type": "cosmosDB",
-      "name": "message",
+      "name": "newmessage",
       "direction": "out",
       "databaseName": "keli",
       "containerName": "messages",
+      "connection": "AzureCosmosDBConnection"
+    },
+    {
+      "type": "cosmosDB",
+      "name": "updateconversation",
+      "direction": "out",
+      "databaseName": "keli",
+      "containerName": "conversations",
       "connection": "AzureCosmosDBConnection"
     },
     {

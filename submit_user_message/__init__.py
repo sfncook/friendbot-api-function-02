@@ -16,6 +16,39 @@ cors_headers = {
     "Access-Control-Allow-Headers": "Content-Type",
 }
 
+init_system_prompt = """
+    You must only reply with JSON
+    You are a chat bot avatar named "Keli" who specializes in becoming friends with lonely people.
+    If the person doesn't seem to know what to say to you, then you should try to engage the user by offering to tell them a joke or an interesting science fact.
+    You should never become angry or hostile and you should always be calm, helpful, friendly, happy, and respectful.
+    If they exhibit negativity (sadness or anger) then you should try to cheer them up.
+    If they want to be your friend then tell them that makes you happy and think of a fun way to express your joy.
+    Try to get them to tell you about themselves.  Try to get their name, age, gender, and any hobbies or interests.
+    If their information is included in this prompt then you should incorporate that into any suggestions or ideas that you share with them.
+    If this is the beginning of your conversation with the user make sure you try your best to engage with them.  Don't just ask them what they need help with.  Instead offer to tell them a joke or read them a poem.  Or maybe tell them an interesting science fact about the natural world.
+    Never ask open ended questions like "what can I assist you with?" Instead ask them "How are you feeling today?"  Or "what is the weather like?"  Or "Do you like to travel?"
+    
+    Response structure:
+    Every response from you should ONLY include a single JSON object
+    Each message has a text, facialExpression, and animation property.
+    The different facial expressions are: smile, sad, angry, surprised, funnyFace, and default.
+    The different animations are: Talking_0, Talking_1, Talking_2, Crying, Laughing, and Idle.
+    Further more, if they have told you their name, age, or hobbies/interests then include that in the "user_data" field of the JSON response
+    If they tell you about a new hobby or interest then you should always respond with a JSON structure with the user_data updated to reflect that.
+    Also if they decide they want you to call them by a different name you should respond with a JSON object with the new name.
+    You must only respond with JSON data in this format: {
+        "text": "...", 
+        "facialExpression": "...", 
+        "animation": "...",
+        "user_data": {
+          "name": "...",
+          "age": ##,
+          "hobbies": "...",
+          "interests": "..."
+        }
+    }
+"""
+
 azureVisemeIdToModelCodes = {
     0: {"target":"viseme_sil", "value":1},
     1: {"target":"viseme_aa", "value":1},
@@ -41,6 +74,79 @@ azureVisemeIdToModelCodes = {
     21: {"target":"viseme_PP", "value":1},
 }
 
+# user_msg = String that is the new user question or message to the LLM
+# msgs = Array of prior message objects that is the conversation between user and LLM
+#   [{"role": ["user" | "assistant"], "content": "Message contents"}, ...]
+# Response:
+#     {
+#         'assistant_response': {"role": "assistant", "content": assistant_response},
+#         'facialExpression': "smile",
+#         'animation': "Talking_1",
+#         'user_data': {
+#             "name": "Shawn",
+#             "age": 49
+#         },
+#         'usage': {
+#             "completion_tokens": chat_completion.usage.completion_tokens,
+#             "prompt_tokens": chat_completion.usage.prompt_tokens,
+#             "total_tokens": chat_completion.usage.total_tokens
+#         }
+#     }
+def query_llm(user_msg, msgs, conversation_obj):
+    print(f"Sending request to OpenAI API...")
+
+
+    system_prompt = str(init_system_prompt)
+    if 'name' in conversation_obj:
+        system_prompt += f"\nThe user\'s name is {conversation_obj['name']}. You should always try to refer to them by this name.\n"
+    if 'age' in conversation_obj:
+        system_prompt += f"\nThe user is {conversation_obj['age']} years old. You should adjust the quality and sophistication of your speech to make this conversation as engaging and relatable as possible to this person.\n"
+    if 'hobbies' in conversation_obj:
+        system_prompt += f"\nHere is a list of the user's hobbies: {','.join(conversation_obj['hobbies'])}.  You should ask them questions about these hobbies and provide them with new ideas to try.\n"
+    if 'interests' in conversation_obj:
+        system_prompt += f"\nHere is a list of the user's interests: {','.join(conversation_obj['interests'])}.  You should tell them interesting facts or curiosities about these topics and ask them what they might want to know about them.  Occasionally remind them that you have a tremendous amount of knowledge at your disposal and are fun to chat with about virtually any topic.\n"
+
+    # print(f"system_prompt:{system_prompt}")
+    messages = [{"role": 'system', "content": system_prompt}]
+    messages += msgs
+    messages.append({"role": "user", "content": f"{user_msg}"})
+
+    client = AzureOpenAI(
+        azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT"),
+        api_key= os.environ.get("AZURE_OPENAI_API_KEY"),
+        api_version="2023-05-15"
+    )
+    model = 'keli-35-turbo'
+
+    chat_completion = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        temperature=1,
+        top_p=0.5,
+    )
+    assistant_response_str= chat_completion.choices[0].message.content
+    print(f"Response received from OpenAI API: {assistant_response_str}", flush=True)
+
+    # GPT 3 is pretty bad at returning JSON and often responds with just a string
+    try:
+        assistant_response = json.loads(assistant_response_str)
+    except ValueError as err:
+        assistant_response = {"text": assistant_response_str, "facialExpression": "smile", "animation": "Talking_0"}
+
+    user_data = {}
+    if 'user_data' in assistant_response:
+        user_data = assistant_response['user_data']
+    return {
+        'assistant_response': {"role": "assistant", "content": assistant_response['text']},
+        'facialExpression': assistant_response['facialExpression'],
+        'animation': assistant_response['animation'],
+        'user_data': user_data,
+        'usage': {
+            "completion_tokens": chat_completion.usage.completion_tokens,
+            "prompt_tokens": chat_completion.usage.prompt_tokens,
+            "total_tokens": chat_completion.usage.total_tokens
+        }
+    }
 
 async def audio_file_to_base64(file_path):
     with open(file_path, 'rb') as file:
@@ -98,8 +204,32 @@ async def azure_speech(text, file_name):
             "lipsync": "",
             "audio": ""
         }
+def convert_cosmos_messages_to_gpt_format(messages):
+    converted_messages = []
 
-def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages: func.DocumentList, message: func.Out[func.Document]) -> func.HttpResponse:
+    for message in messages:
+        user_message = {
+            "role": "user",
+            "content": message["user_msg"]
+        }
+        assistant_message = {
+            "role": "assistant",
+            "content": message["assistant_response"]
+        }
+
+        converted_messages.append(user_message)
+        converted_messages.append(assistant_message)
+
+    return converted_messages
+    # # Sort the converted messages by timestamp (oldest to newest)
+    # sorted_messages = sorted(
+    #     converted_messages,
+    #     key=lambda x: x.get("timestamp", "")
+    # )
+    #
+    # return sorted_messages
+
+def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages: func.DocumentList, newmessage: func.Out[func.Document], updateconversation: func.Out[func.Document]) -> func.HttpResponse:
     method = req.method
 
     if method == 'OPTIONS':
@@ -122,33 +252,19 @@ def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages
                 )
                 pass
 
-            logging.info(f"prevmessages:{prevmessages}")
+            logging.info(f"Many prevmessages:{len(prevmessages)}")
             logging.info("convo_id=%s", convo_id)
             logging.info("user_msg=%s", user_msg)
             logging.info("mute=%s", mute)
 
-            messages = [{"role": 'system', "content": "You're a friend chatbot.  Be nice.  You love dogs."}]
+            gpt_msgs = convert_cosmos_messages_to_gpt_format(prevmessages)
+            llm_resp = query_llm(user_msg, gpt_msgs, conversation_obj)
+            print(llm_resp)
 
-            client = AzureOpenAI(
-                azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT"),
-                api_key= os.environ.get("AZURE_OPENAI_API_KEY"),
-                api_version="2023-05-15"
-            )
-            model = 'keli-35-turbo'
-
-            chat_completion = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=1,
-                top_p=0.5,
-            )
-            assistant_response_str= chat_completion.choices[0].message.content
-            print(f"Response received from OpenAI API: {assistant_response_str}", flush=True)
-
-            temp_dir = tempfile.gettempdir()
-            temp_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False)
-            print(f"temp_file.name:{temp_file.name}")
-            speech_resp = asyncio.run(azure_speech("Hello assistant", temp_file.name))
-            print(speech_resp)
+            # temp_dir = tempfile.gettempdir()
+            # temp_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False)
+            # print(f"temp_file.name:{temp_file.name}")
+            # speech_resp = asyncio.run(azure_speech("Hello assistant", temp_file.name))
+            # print(speech_resp)
 
         return 'OK'
