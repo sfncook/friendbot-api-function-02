@@ -1,0 +1,33 @@
+{
+  "bindings": [
+    {
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": ["get", "post"]
+    },
+    {
+      "type": "cosmosDB",
+      "name": "document",
+      "direction": "in",
+      "databaseName": "keli",
+      "collectionName": "conversations",
+      "connectionStringSetting": "AzureCosmosDBConnection",
+      "id": "{Query.id}",
+      "partitionKey": "{Query.partitionKey}"
+    },
+    {
+      "type": "cosmosDB",
+      "name": "outputDocument",
+      "direction": "out",
+      "databaseName": "keli",
+      "collectionName": "conversations",
+      "connectionStringSetting": "AzureCosmosDBConnection"
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "$return"
+    }
+  ]
+}
