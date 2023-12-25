@@ -4,6 +4,8 @@ csx
 .vs
 edge
 Publish
+lib
+include
 
 *.user
 *.suo
@@ -46,3 +48,6 @@ __pycache__/
 __blobstorage__
 __queuestorage__
 __azurite_db*__.json
+
+.idea
+.vscode
