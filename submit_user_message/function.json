@@ -1,0 +1,44 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "authLevel": "Anonymous",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": ["put", "options"]
+    },
+    {
+      "type": "cosmosDB",
+      "name": "message",
+      "direction": "out",
+      "databaseName": "keli",
+      "containerName": "messages",
+      "connection": "AzureCosmosDBConnection"
+    },
+    {
+      "name": "inconversations",
+      "direction": "in",
+      "type": "cosmosDB",
+      "connection": "AzureCosmosDBConnection",
+      "databaseName": "keli",
+      "containerName": "conversations",
+      "id": "{convoid}",
+      "partitionKey": "{convoid}"
+    },
+    {
+      "name": "prevmessages",
+      "direction": "in",
+      "type": "cosmosDB",
+      "connection": "AzureCosmosDBConnection",
+      "databaseName": "keli",
+      "containerName": "messages",
+      "sqlQuery": "SELECT TOP 10 * FROM m WHERE m.conversation_id = {convoid} ORDER BY m.timestamp DESC"
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "$return"
+    }
+  ]
+}
