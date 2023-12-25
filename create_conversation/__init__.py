@@ -10,18 +10,23 @@ cors_headers = {
 }
 
 def main(req: func.HttpRequest, conversation: func.Out[func.Document]) -> func.HttpResponse:
-    id = str(uuid.uuid4())
-    new_conversation = {
-        "id": id,
-        "user_id": id,
-        "interests": [],
-        "hobbies": []
-    }
+    method = req.method
 
-    conversation.set(func.Document.from_dict(new_conversation))
-    return func.HttpResponse(
-        status_code=200,
-        headers=cors_headers,
-        body=json.dumps(new_conversation, separators=(',', ':')),
-        mimetype="application/json"
-    )
+    if method == 'OPTIONS':
+        return func.HttpResponse(headers=cors_headers)
+    else:
+        id = str(uuid.uuid4())
+        new_conversation = {
+            "id": id,
+            "user_id": id,
+            "interests": [],
+            "hobbies": []
+        }
+
+        conversation.set(func.Document.from_dict(new_conversation))
+        return func.HttpResponse(
+            status_code=200,
+            headers=cors_headers,
+            body=json.dumps(new_conversation, separators=(',', ':')),
+            mimetype="application/json"
+        )
