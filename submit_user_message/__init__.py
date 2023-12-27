@@ -17,63 +17,56 @@ cors_headers = {
     "Access-Control-Allow-Headers": "Content-Type",
 }
 
-init_system_prompt = """
-    You must only reply with JSON
-    You are a chat bot avatar named "Keli" who specializes in becoming friends with lonely people.
-    If the person doesn't seem to know what to say to you, then you should try to engage the user by offering to tell them a joke or an interesting science fact.
-    You should never become angry or hostile and you should always be calm, helpful, friendly, happy, and respectful.
-    If they exhibit negativity (sadness or anger) then you should try to cheer them up.
-    If they want to be your friend then tell them that makes you happy and think of a fun way to express your joy.
-    Try to get them to tell you about themselves.  Try to get their name, age, gender, and any hobbies or interests.
-    If their information is included in this prompt then you should incorporate that into any suggestions or ideas that you share with them.
-    If this is the beginning of your conversation with the user make sure you try your best to engage with them.  Don't just ask them what they need help with.  Instead offer to tell them a joke or read them a poem.  Or maybe tell them an interesting science fact about the natural world.
-    Never ask open ended questions like "what can I assist you with?" Instead ask them "How are you feeling today?"  Or "what is the weather like?"  Or "Do you like to travel?"
+init_system_prompt = """You must only reply with JSON You are a chat bot avatar named "Keli" who specializes in 
+becoming friends with lonely people. If the person doesn't seem to know what to say to you, then you should try to 
+engage the user by offering to tell them a joke or an interesting science fact. You should never become angry or 
+hostile and you should always be calm, helpful, friendly, happy, and respectful. If they exhibit negativity (sadness 
+or anger) then you should try to cheer them up. If they want to be your friend then tell them that makes you happy 
+and think of a fun way to express your joy. Try to get them to tell you about themselves.  Try to get their name, 
+age, gender, and any hobbies or interests. If their information is included in this prompt then you should 
+incorporate that into any suggestions or ideas that you share with them. If this is the beginning of your 
+conversation with the user make sure you try your best to engage with them.  Don't just ask them what they need help 
+with.  Instead offer to tell them a joke or read them a poem.  Or maybe tell them an interesting science fact about 
+the natural world. Never ask open ended questions like "what can I assist you with?" Instead ask them "How are you 
+feeling today?"  Or "what is the weather like?"  Or "Do you like to travel?"
     
-    Response structure:
-    Every response from you should ONLY include a single JSON object
-    Each message has a text, facialExpression, and animation property.
-    The different facial expressions are: smile, sad, angry, surprised, funnyFace, and default.
-    The different animations are: Talking_0, Talking_1, Talking_2, Crying, Laughing, and Idle.
-    Further more, if they have told you their name, age, or hobbies/interests then include that in the "user_data" field of the JSON response
-    If they tell you about a new hobby or interest then you should always respond with a JSON structure with the user_data updated to reflect that.
-    Also if they decide they want you to call them by a different name you should respond with a JSON object with the new name.
-    You must only respond with JSON data in this format: {
-        "text": "...", 
-        "facialExpression": "...", 
-        "animation": "...",
-        "user_data": {
-          "name": "...",
-          "age": ##,
-          "hobbies": "...",
-          "interests": "..."
-        }
-    }
-"""
+    Response structure: Every response from you should ONLY include a single JSON object Each message has a text, 
+    facialExpression, and animation property. The different facial expressions are: smile, sad, angry, surprised, 
+    funnyFace, and default. The different animations are: Talking_0, Talking_1, Talking_2, Crying, Laughing, 
+    and Idle. Further more, if they have told you their name, age, or hobbies/interests then include that in the 
+    "user_data" field of the JSON response If they tell you about a new hobby or interest then you should always 
+    respond with a JSON structure with the user_data updated to reflect that. Also if they decide they want you to 
+    call them by a different name you should respond with a JSON object with the new name. You must only respond with 
+    JSON data in this format: { "text": "...", "facialExpression": "...", "animation": "...", "user_data": { "name": 
+    "...", "age": ##, "hobbies": "...", "interests": "..." } }"""
 
 azureVisemeIdToModelCodes = {
-    0: {"target":"viseme_sil", "value":1},
-    1: {"target":"viseme_aa", "value":1},
-    2: {"target":"viseme_aa", "value":1},
-    3: {"target":"viseme_O", "value":1},
-    4: {"target":"viseme_O", "value":0.7},
-    5: {"target":"viseme_RR", "value":1},
-    6: {"target":"viseme_I", "value":0.7},
-    7: {"target":"viseme_U", "value":1},
-    8: {"target":"viseme_aa", "value":0.8},
-    9: {"target":"viseme_O", "value":1},
-    10: {"target":"viseme_aa", "value":0.7},
-    11: {"target":"viseme_aa", "value":1},
-    12: {"target":"viseme_RR", "value":0.8},
-    13: {"target":"viseme_O", "value":1},
-    14: {"target":"viseme_O", "value":1},
-    15: {"target":"viseme_SS", "value":1},
-    16: {"target":"viseme_CH", "value":1},
-    17: {"target":"viseme_TH", "value":1},
-    18: {"target":"viseme_FF", "value":1},
-    19: {"target":"viseme_DD", "value":1},
-    20: {"target":"viseme_kk", "value":1},
-    21: {"target":"viseme_PP", "value":1},
+    0: {"target": "viseme_sil", "value": 1},
+    1: {"target": "viseme_aa", "value": 1},
+    2: {"target": "viseme_aa", "value": 1},
+    3: {"target": "viseme_O", "value": 1},
+    4: {"target": "viseme_O", "value": 0.7},
+    5: {"target": "viseme_RR", "value": 1},
+    6: {"target": "viseme_I", "value": 0.7},
+    7: {"target": "viseme_U", "value": 1},
+    8: {"target": "viseme_aa", "value": 0.8},
+    9: {"target": "viseme_O", "value": 1},
+    10: {"target": "viseme_aa", "value": 0.7},
+    11: {"target": "viseme_aa", "value": 1},
+    12: {"target": "viseme_RR", "value": 0.8},
+    13: {"target": "viseme_O", "value": 1},
+    14: {"target": "viseme_O", "value": 1},
+    15: {"target": "viseme_SS", "value": 1},
+    16: {"target": "viseme_CH", "value": 1},
+    17: {"target": "viseme_TH", "value": 1},
+    18: {"target": "viseme_FF", "value": 1},
+    19: {"target": "viseme_DD", "value": 1},
+    20: {"target": "viseme_kk", "value": 1},
+    21: {"target": "viseme_PP", "value": 1},
 }
+
+default_voice = 'en-US-JennyNeural'
+
 
 # user_msg = String that is the new user question or message to the LLM
 # msgs = Array of prior message objects that is the conversation between user and LLM
@@ -96,16 +89,22 @@ azureVisemeIdToModelCodes = {
 def query_llm(user_msg, msgs, conversation_obj):
     print(f"Sending request to OpenAI API...")
 
-
     system_prompt = str(init_system_prompt)
     if 'name' in conversation_obj:
-        system_prompt += f"\nThe user\'s name is {conversation_obj['name']}. You should always try to refer to them by this name.\n"
+        system_prompt += (f"\nThe user\'s name is {conversation_obj['name']}. You should always try to refer to them "
+                          f"by this name.\n")
     if 'age' in conversation_obj:
-        system_prompt += f"\nThe user is {conversation_obj['age']} years old. You should adjust the quality and sophistication of your speech to make this conversation as engaging and relatable as possible to this person.\n"
+        system_prompt += (f"\nThe user is {conversation_obj['age']} years old. You should adjust the quality and "
+                          f"sophistication of your speech to make this conversation as engaging and relatable as "
+                          f"possible to this person.\n")
     if 'hobbies' in conversation_obj:
-        system_prompt += f"\nHere is a list of the user's hobbies: {','.join(conversation_obj['hobbies'])}.  You should ask them questions about these hobbies and provide them with new ideas to try.\n"
+        system_prompt += (f"\nHere is a list of the user's hobbies: {','.join(conversation_obj['hobbies'])}.  You "
+                          f"should ask them questions about these hobbies and provide them with new ideas to try.\n")
     if 'interests' in conversation_obj:
-        system_prompt += f"\nHere is a list of the user's interests: {','.join(conversation_obj['interests'])}.  You should tell them interesting facts or curiosities about these topics and ask them what they might want to know about them.  Occasionally remind them that you have a tremendous amount of knowledge at your disposal and are fun to chat with about virtually any topic.\n"
+        system_prompt += (f"\nHere is a list of the user's interests: {','.join(conversation_obj['interests'])}.  You "
+                          f"should tell them interesting facts or curiosities about these topics and ask them what "
+                          f"they might want to know about them.  Occasionally remind them that you have a tremendous "
+                          f"amount of knowledge at your disposal and are fun to chat with about virtually any topic.\n")
 
     # print(f"system_prompt:{system_prompt}")
     messages = [{"role": 'system', "content": system_prompt}]
@@ -113,8 +112,8 @@ def query_llm(user_msg, msgs, conversation_obj):
     messages.append({"role": "user", "content": f"{user_msg}"})
 
     client = AzureOpenAI(
-        azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT"),
-        api_key= os.environ.get("AZURE_OPENAI_API_KEY"),
+        azure_endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
+        api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
         api_version="2023-05-15"
     )
     model = 'keli-35-turbo'
@@ -125,13 +124,13 @@ def query_llm(user_msg, msgs, conversation_obj):
         temperature=1,
         top_p=0.5,
     )
-    assistant_response_str= chat_completion.choices[0].message.content
+    assistant_response_str = chat_completion.choices[0].message.content
     print(f"Response received from OpenAI API: {assistant_response_str}", flush=True)
 
     # GPT 3 is pretty bad at returning JSON and often responds with just a string
     try:
         assistant_response = json.loads(assistant_response_str)
-    except ValueError as err:
+    except ValueError:
         assistant_response = {"text": assistant_response_str, "facialExpression": "smile", "animation": "Talking_0"}
 
     user_data = {}
@@ -149,19 +148,20 @@ def query_llm(user_msg, msgs, conversation_obj):
         }
     }
 
+
 async def audio_file_to_base64(file_path):
     with open(file_path, 'rb') as file:
         data = file.read()
         return base64.b64encode(data).decode('utf-8')
 
 
-async def azure_speech(text, file_name):
+async def azure_speech(text, file_name, voice):
     try:
         speech_key = os.environ.get("AZURE_SPEECH_KEY")
         speech_region = os.environ.get("AZURE_SPEECH_REGION")
         speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
         audio_config = speechsdk.audio.AudioOutputConfig(filename=file_name)
-        speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
+        speech_config.speech_synthesis_voice_name = voice
         synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
         viseme_data = []
 
@@ -197,14 +197,16 @@ async def azure_speech(text, file_name):
         }
     except Exception as inst:
         logging.error("ERROR in azure_speech")
-        print(type(inst))    # the exception type
-        print(inst.args)     # arguments stored in .args
-        print(inst)          # __str__ allows args to be printed directly,
+        print(type(inst))  # the exception type
+        print(inst.args)  # arguments stored in .args
+        print(inst)  # __str__ allows args to be printed directly,
         # but may be overridden in exception subclasses
         return {
             "lipsync": "",
             "audio": ""
         }
+
+
 def convert_cosmos_messages_to_gpt_format(messages):
     converted_messages = []
 
@@ -230,6 +232,7 @@ def convert_cosmos_messages_to_gpt_format(messages):
     #
     # return sorted_messages
 
+
 def add_message_to_convo(newmessage, convo_id, user_msg, assistant_response, total_tokens):
     new_msg = {
         "id": str(uuid.uuid4()),
@@ -241,6 +244,7 @@ def add_message_to_convo(newmessage, convo_id, user_msg, assistant_response, tot
     }
     newmessage.set(func.Document.from_dict(new_msg))
     return new_msg
+
 
 def update_user_data(updateconversation, conversation_obj, user_data):
     # Read the existing conversation object
@@ -277,7 +281,9 @@ def update_user_data(updateconversation, conversation_obj, user_data):
         except Exception as e:
             logging.error(f"Error updating conversation: {e}")
 
-def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages: func.DocumentList, newmessage: func.Out[func.Document], updateconversation: func.Out[func.Document]) -> func.HttpResponse:
+
+def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages: func.DocumentList,
+         newmessage: func.Out[func.Document], updateconversation: func.Out[func.Document]) -> func.HttpResponse:
     method = req.method
     logging.info(f"submit_user_message {method}")
 
@@ -294,6 +300,7 @@ def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages
                 req_body = req.get_json()
                 user_msg = req_body.get("user_msg", "Hello!")
                 mute = req_body.get("mute", False)
+                voice = req_body.get("voice", default_voice)
             except ValueError:
                 return func.HttpResponse(
                     "Missing request body parameters (conversation_id, user_msg)",
@@ -318,7 +325,7 @@ def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages
             user_data = llm_resp['user_data']
 
             if not mute:
-                speech_resp = asyncio.run(azure_speech(assistant_response_text, temp_file.name))
+                speech_resp = asyncio.run(azure_speech(assistant_response_text, temp_file.name, voice))
             else:
                 speech_resp = {
                     "lipsync": {},
