@@ -17,7 +17,9 @@ cors_headers = {
     "Access-Control-Allow-Headers": "Content-Type",
 }
 
-init_system_prompt = """You must only reply with JSON You are a chat bot avatar named "Keli" who specializes in 
+name_tag = "[NAME]"
+
+init_system_prompt = """You must only reply with JSON You are a chat bot avatar named "[NAME]" who specializes in 
 becoming friends with lonely people. If the person doesn't seem to know what to say to you, then you should try to 
 engage the user by offering to tell them a joke or an interesting science fact. You should never become angry or 
 hostile and you should always be calm, helpful, friendly, happy, and respectful. If they exhibit negativity (sadness 
@@ -86,10 +88,9 @@ default_voice = 'en-US-JennyNeural'
 #             "total_tokens": chat_completion.usage.total_tokens
 #         }
 #     }
-def query_llm(user_msg, msgs, conversation_obj):
+def query_llm(user_msg, msgs, conversation_obj, system_prompt):
     print(f"Sending request to OpenAI API...")
 
-    system_prompt = str(init_system_prompt)
     if 'name' in conversation_obj:
         system_prompt += (f"\nThe user\'s name is {conversation_obj['name']}. You should always try to refer to them "
                           f"by this name.\n")
@@ -300,7 +301,7 @@ def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages
                 req_body = req.get_json()
                 user_msg = req_body.get("user_msg", "Hello!")
                 mute = req_body.get("mute", False)
-                voice = req_body.get("voice", default_voice)
+                avatar = req_body.get("avatar", {})
             except ValueError:
                 return func.HttpResponse(
                     "Missing request body parameters (conversation_id, user_msg)",
@@ -314,7 +315,7 @@ def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages
             logging.info("mute=%s", mute)
 
             gpt_msgs = convert_cosmos_messages_to_gpt_format(prevmessages)
-            llm_resp = query_llm(user_msg, gpt_msgs, conversation_obj)
+            llm_resp = query_llm(user_msg, gpt_msgs, conversation_obj, init_system_prompt.replace(name_tag, avatar['name']))
 
             temp_dir = tempfile.gettempdir()
             temp_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False)
@@ -325,7 +326,7 @@ def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages
             user_data = llm_resp['user_data']
 
             if not mute:
-                speech_resp = asyncio.run(azure_speech(assistant_response_text, temp_file.name, voice))
+                speech_resp = asyncio.run(azure_speech(assistant_response_text, temp_file.name, avatar['voice']))
             else:
                 speech_resp = {
                     "lipsync": {},
