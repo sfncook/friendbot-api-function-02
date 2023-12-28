@@ -56,18 +56,18 @@ def query_llm(user_msg, msgs, conversation_obj, avatar_name):
 
     system_prompt = init_system_prompt.replace(name_tag, avatar_name)
 
-    if 'name' in conversation_obj:
-        system_prompt += (f"\nThe user\'s name is {conversation_obj['name']}. You should always try to refer to them "
+    if 'user_name' in conversation_obj:
+        system_prompt += (f"\nThe user\'s name is {conversation_obj['user_name']}. You should always try to refer to them "
                           f"by this name.\n")
-    if 'age' in conversation_obj:
-        system_prompt += (f"\nThe user is {conversation_obj['age']} years old. You should adjust the quality and "
+    if 'user_birth_year' in conversation_obj:
+        system_prompt += (f"\nThe user was born in {conversation_obj['user_birth_year']}. You should adjust the quality and "
                           f"sophistication of your speech to make this conversation as engaging and relatable as "
                           f"possible to this person.\n")
-    if 'hobbies' in conversation_obj:
-        system_prompt += (f"\nHere is a list of the user's hobbies: {','.join(conversation_obj['hobbies'])}.  You "
+    if 'user_hobbies' in conversation_obj:
+        system_prompt += (f"\nHere is a list of the user's hobbies: {','.join(conversation_obj['user_hobbies'])}.  You "
                           f"should ask them questions about these hobbies and provide them with new ideas to try.\n")
-    if 'interests' in conversation_obj:
-        system_prompt += (f"\nHere is a list of the user's interests: {','.join(conversation_obj['interests'])}.  You "
+    if 'user_interests' in conversation_obj:
+        system_prompt += (f"\nHere is a list of the user's interests: {','.join(conversation_obj['user_interests'])}.  You "
                           f"should tell them interesting facts or curiosities about these topics and ask them what "
                           f"they might want to know about them.  Occasionally remind them that you have a tremendous "
                           f"amount of knowledge at your disposal and are fun to chat with about virtually any topic.\n")
@@ -76,6 +76,8 @@ def query_llm(user_msg, msgs, conversation_obj, avatar_name):
     messages = [{"role": 'system', "content": system_prompt}]
     messages += msgs
     messages.append({"role": "user", "content": f"{user_msg}"})
+
+    print(messages)
 
     client = AzureOpenAI(
         azure_endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),

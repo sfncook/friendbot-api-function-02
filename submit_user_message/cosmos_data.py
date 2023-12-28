@@ -18,29 +18,19 @@ def add_message_to_convo(newmessage, convo_id, user_msg, assistant_response, tot
 
 
 def update_user_data(updateconversation, conversation_obj, user_data):
-    # Read the existing conversation object
-    # conversation_obj = conversations_container.read_item(
-    #     item=convo_id,
-    #     partition_key=convo_id,
-    # )
-
-    # Check for changes or missing keys
     needs_update = False
     for key, value in user_data.items():
-        # Special handling for 'hobbies' and 'interests', which are arrays
-        if key in ["hobbies", "interests"]:
+        # If the value is a list, handle merging and de-duplication
+        if isinstance(value, list):
             if key not in conversation_obj:
                 conversation_obj[key] = []
-
-            # Split comma-separated string into a list and trim whitespace
-            if isinstance(value, str):
-                value = [item.strip() for item in value.split(',')]
 
             # Merge with existing list and de-duplicate
             updated_list = list(set(conversation_obj[key] + value))
             if updated_list != conversation_obj[key]:
                 conversation_obj[key] = updated_list
                 needs_update = True
+        # Handle other types of values (like strings not needing splitting)
         elif key not in conversation_obj or conversation_obj[key] != value:
             conversation_obj[key] = value
             needs_update = True
