@@ -48,6 +48,7 @@ def main(req: func.HttpRequest, inconversations: func.DocumentList, prevmessages
 
             gpt_msgs = convert_cosmos_messages_to_gpt_format(prevmessages)
             llm_resp = query_llm(user_msg, gpt_msgs, conversation_obj, avatar['name'])
+            print(llm_resp)
 
             temp_dir = tempfile.gettempdir()
             temp_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False)

@@ -41,8 +41,6 @@ default_voice = 'en-US-JennyNeural'
 # Response:
 #     {
 #         'assistant_response': {"role": "assistant", "content": assistant_response},
-#         'facialExpression': "smile",
-#         'animation': "Talking_1",
 #         'user_data': {
 #             "name": "Shawn",
 #             "age": 49
@@ -86,7 +84,7 @@ def query_llm(user_msg, msgs, conversation_obj, avatar_name):
     )
     model = 'keli-35-turbo'
 
-    response = client.chat.completions.create(
+    chat_completion = client.chat.completions.create(
         model=model,
         messages=messages,
         temperature=1,
@@ -110,8 +108,8 @@ def query_llm(user_msg, msgs, conversation_obj, avatar_name):
                                 "description": "The user's name first and/or last that the user has given you"
                             },
                             "user_birth_year": {"type": "integer"},
-                            "user_hobbies": {"type": "string"},
-                            "user_interests": {"type": "string"},
+                            "user_hobbies": {"type": "array", "items": {"type": "string"}},
+                            "user_interests": {"type": "array", "items": {"type": "string"}},
                         },
                         "required": ["assistant_response"],
                     },
@@ -120,69 +118,42 @@ def query_llm(user_msg, msgs, conversation_obj, avatar_name):
         ],
     )
 
-    response_message = response.choices[0].message
+    response_message = chat_completion.choices[0].message
     tool_calls = response_message.tool_calls
-    # Step 2: check if the model wanted to call a function
-    if tool_calls:
-        # Step 3: call the function
-        # Note: the JSON response may not always be valid; be sure to handle errors
-        # available_functions = {
-        #     "response_with_optional_user_data": response_with_optional_user_data,
-        # }  # only one function in this example, but you can have multiple
-        messages.append(response_message)  # extend conversation with assistant's reply
-        # Step 4: send the info for each function call and function response to the model
-        for tool_call in tool_calls:
-            function_name = tool_call.function.name
-            # function_to_call = available_functions[function_name]
-            function_args = json.loads(tool_call.function.arguments)
-            print(function_name, flush=True)
-            print(function_args, flush=True)
-            # function_response = function_to_call(
-            #     location=function_args.get("location"),
-            #     unit=function_args.get("unit"),
-            # )
-            # messages.append(
-            #     {
-            #         "tool_call_id": tool_call.id,
-            #         "role": "tool",
-            #         "name": function_name,
-            #         "content": function_response,
-            #     }
-            # )  # extend conversation with function response
-        # second_response = client.chat.completions.create(
-        #     model="<REPLACE_WITH_YOUR_1106_MODEL_DEPLOYMENT_NAME>",
-        #     messages=messages,
-        # )  # get a new response from the model where it can see the function response
-        # return second_response
+    tool_call = tool_calls[0]
+    function_args = json.loads(tool_call.function.arguments)
+    user_data = {}
+    # Populate user_data with properties that start with "user_"
+    for key, value in function_args.items():
+        if key.startswith("user_"):
+            user_data[key] = value
 
     return {
-        'assistant_response': {"role": "assistant", "content": 'XXX YYY ZZZ'},
-        'user_data': {},
+        'assistant_response': {"role": "assistant", "content": function_args['assistant_response']},
+        'user_data': user_data,
         'usage': {
-            "completion_tokens": 1234,
-            "prompt_tokens": 1234,
-            "total_tokens": 1234
+            "completion_tokens": chat_completion.usage.completion_tokens,
+            "prompt_tokens": chat_completion.usage.prompt_tokens,
+            "total_tokens": chat_completion.usage.total_tokens
         }
     }
 
-    # assistant_response_str = chat_completion.choices[0].message.content
-    # # GPT 3 is pretty bad at returning JSON and often responds with just a string
-    # try:
-    #     assistant_response = json.loads(assistant_response_str)
-    # except ValueError:
-    #     assistant_response = {"text": assistant_response_str, "facialExpression": "smile", "animation": "Talking_0"}
+    # response_message = response.choices[0].message
+    # tool_calls = response_message.tool_calls
+    # if tool_calls:
+    #     for tool_call in tool_calls:
+    #         print(tool_call)
+    #         function_name = tool_call.function.name
+    #         function_args = json.loads(tool_call.function.arguments)
+    #         print(function_name, flush=True)
+    #         print(function_args, flush=True)
     #
-    # user_data = {}
-    # if 'user_data' in assistant_response:
-    #     user_data = assistant_response['user_data']
     # return {
-    #     'assistant_response': {"role": "assistant", "content": assistant_response['text']},
-    #     'facialExpression': assistant_response['facialExpression'],
-    #     'animation': assistant_response['animation'],
-    #     'user_data': user_data,
+    #     'assistant_response': {"role": "assistant", "content": 'XXX YYY ZZZ'},
+    #     'user_data': {},
     #     'usage': {
-    #         "completion_tokens": chat_completion.usage.completion_tokens,
-    #         "prompt_tokens": chat_completion.usage.prompt_tokens,
-    #         "total_tokens": chat_completion.usage.total_tokens
+    #         "completion_tokens": 1234,
+    #         "prompt_tokens": 1234,
+    #         "total_tokens": 1234
     #     }
     # }
