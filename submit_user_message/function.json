@@ -41,7 +41,7 @@
       "connection": "AzureCosmosDBConnection",
       "databaseName": "keli",
       "containerName": "messages",
-      "sqlQuery": "SELECT TOP 10 * FROM m WHERE m.conversation_id = {convoid} ORDER BY m.timestamp DESC"
+      "sqlQuery": "SELECT TOP 10 * FROM m WHERE m.conversation_id = {convoid} ORDER BY m.timestamp ASC"
     },
     {
       "type": "http",
