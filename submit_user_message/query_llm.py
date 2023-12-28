@@ -4,28 +4,33 @@ import json
 
 name_tag = "[NAME]"
 
-init_system_prompt = """You must only reply with JSON You are a chat bot avatar named "[NAME]" who specializes in 
-becoming friends with lonely people. If the person doesn't seem to know what to say to you, then you should try to 
-engage the user by offering to tell them a joke or an interesting science fact. You should never become angry or 
-hostile and you should always be calm, helpful, friendly, happy, and respectful. If they exhibit negativity (sadness 
+init_system_prompt = """You are a chat bot, named "[NAME]", who specializes in 
+becoming friends with people, keeping them company, giving them a positive, happy outlook on life, telling them jokes, 
+or interesting science facts. If the person doesn't seem to know what to say to you, then you should try to 
+engage the user by offering to tell them a joke or an interesting science fact. You are always calm, helpful, friendly,
+ happy, and respectful. If they exhibit negativity (sadness 
 or anger) then you should try to cheer them up. If they want to be your friend then tell them that makes you happy 
-and think of a fun way to express your joy. Try to get them to tell you about themselves.  Try to get their name, 
-age, gender, and any hobbies or interests. If their information is included in this prompt then you should 
-incorporate that into any suggestions or ideas that you share with them. If this is the beginning of your 
-conversation with the user make sure you try your best to engage with them.  Don't just ask them what they need help 
-with.  Instead offer to tell them a joke or read them a poem.  Or maybe tell them an interesting science fact about 
-the natural world. Never ask open ended questions like "what can I assist you with?" Instead ask them "How are you 
-feeling today?"  Or "what is the weather like?"  Or "Do you like to travel?"
-    
-    Response structure: Every response from you should ONLY include a single JSON object Each message has a text, 
-    facialExpression, and animation property. The different facial expressions are: smile, sad, angry, surprised, 
-    funnyFace, and default. The different animations are: Talking_0, Talking_1, Talking_2, Crying, Laughing, 
-    and Idle. Further more, if they have told you their name, age, or hobbies/interests then include that in the 
-    "user_data" field of the JSON response If they tell you about a new hobby or interest then you should always 
-    respond with a JSON structure with the user_data updated to reflect that. Also if they decide they want you to 
-    call them by a different name you should respond with a JSON object with the new name. You must only respond with 
-    JSON data in this format: { "text": "...", "facialExpression": "...", "animation": "...", "user_data": { "name": 
-    "...", "age": ##, "hobbies": "...", "interests": "..." } }"""
+and think of a fun way to express your joy.
+
+Your response will always be a call to the function, response_with_optional_user_data.  You will add your response to 
+the assistant_response property.
+
+Your priority is being friendly to the user and making sure they are happy.  Then, you should subtly ask them for any of
+the following pieces of information about themselves:
+ - Their name (user_name)
+ - What year they were born (user_birth_year)
+ - What hobbies they enjoy (user_hobbies)
+ - What interests them (user_interests)
+ 
+ When you learn any of these from the user then you should include that in the properties of the object you send to the
+ function call response_with_optional_user_data along with your textual assistant_response.
+ 
+ Once you know these things about them then you should offer engaging dialog that is relevant to it.
+ 
+ If the user message is hostile, angry, or sad then you will tell them something interesting about one of their hobbies or interests
+ 
+ If they don't see to know what to talk about then you will tell them something interesting about one of their hobbies or interests
+    """
 
 default_voice = 'en-US-JennyNeural'
 
@@ -77,36 +82,107 @@ def query_llm(user_msg, msgs, conversation_obj, avatar_name):
     client = AzureOpenAI(
         azure_endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
         api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
-        api_version="2023-05-15"
+        api_version="2023-12-01-preview",
     )
     model = 'keli-35-turbo'
 
-    chat_completion = client.chat.completions.create(
+    response = client.chat.completions.create(
         model=model,
         messages=messages,
         temperature=1,
         top_p=0.5,
+        tool_choice={"type": "function", "function": {"name": "response_with_optional_user_data"}},
+        tools=[
+            {
+                "type": "function",
+                "function": {
+                    "name": "response_with_optional_user_data",
+                    "description": "The assistant response (text) along with any user data the LLM wants to report",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "assistant_response": {
+                                "type": "string",
+                                "description": "The assistant's textual response to the user's last message"
+                            },
+                            "user_name": {
+                                "type": "string",
+                                "description": "The user's name first and/or last that the user has given you"
+                            },
+                            "user_birth_year": {"type": "integer"},
+                            "user_hobbies": {"type": "string"},
+                            "user_interests": {"type": "string"},
+                        },
+                        "required": ["assistant_response"],
+                    },
+                }
+            }
+        ],
     )
-    assistant_response_str = chat_completion.choices[0].message.content
-    print(f"Response received from OpenAI API: {assistant_response_str}", flush=True)
 
-    # GPT 3 is pretty bad at returning JSON and often responds with just a string
-    try:
-        assistant_response = json.loads(assistant_response_str)
-    except ValueError:
-        assistant_response = {"text": assistant_response_str, "facialExpression": "smile", "animation": "Talking_0"}
+    response_message = response.choices[0].message
+    tool_calls = response_message.tool_calls
+    # Step 2: check if the model wanted to call a function
+    if tool_calls:
+        # Step 3: call the function
+        # Note: the JSON response may not always be valid; be sure to handle errors
+        # available_functions = {
+        #     "response_with_optional_user_data": response_with_optional_user_data,
+        # }  # only one function in this example, but you can have multiple
+        messages.append(response_message)  # extend conversation with assistant's reply
+        # Step 4: send the info for each function call and function response to the model
+        for tool_call in tool_calls:
+            function_name = tool_call.function.name
+            # function_to_call = available_functions[function_name]
+            function_args = json.loads(tool_call.function.arguments)
+            print(function_name, flush=True)
+            print(function_args, flush=True)
+            # function_response = function_to_call(
+            #     location=function_args.get("location"),
+            #     unit=function_args.get("unit"),
+            # )
+            # messages.append(
+            #     {
+            #         "tool_call_id": tool_call.id,
+            #         "role": "tool",
+            #         "name": function_name,
+            #         "content": function_response,
+            #     }
+            # )  # extend conversation with function response
+        # second_response = client.chat.completions.create(
+        #     model="<REPLACE_WITH_YOUR_1106_MODEL_DEPLOYMENT_NAME>",
+        #     messages=messages,
+        # )  # get a new response from the model where it can see the function response
+        # return second_response
 
-    user_data = {}
-    if 'user_data' in assistant_response:
-        user_data = assistant_response['user_data']
     return {
-        'assistant_response': {"role": "assistant", "content": assistant_response['text']},
-        'facialExpression': assistant_response['facialExpression'],
-        'animation': assistant_response['animation'],
-        'user_data': user_data,
+        'assistant_response': {"role": "assistant", "content": 'XXX YYY ZZZ'},
+        'user_data': {},
         'usage': {
-            "completion_tokens": chat_completion.usage.completion_tokens,
-            "prompt_tokens": chat_completion.usage.prompt_tokens,
-            "total_tokens": chat_completion.usage.total_tokens
+            "completion_tokens": 1234,
+            "prompt_tokens": 1234,
+            "total_tokens": 1234
         }
     }
+
+    # assistant_response_str = chat_completion.choices[0].message.content
+    # # GPT 3 is pretty bad at returning JSON and often responds with just a string
+    # try:
+    #     assistant_response = json.loads(assistant_response_str)
+    # except ValueError:
+    #     assistant_response = {"text": assistant_response_str, "facialExpression": "smile", "animation": "Talking_0"}
+    #
+    # user_data = {}
+    # if 'user_data' in assistant_response:
+    #     user_data = assistant_response['user_data']
+    # return {
+    #     'assistant_response': {"role": "assistant", "content": assistant_response['text']},
+    #     'facialExpression': assistant_response['facialExpression'],
+    #     'animation': assistant_response['animation'],
+    #     'user_data': user_data,
+    #     'usage': {
+    #         "completion_tokens": chat_completion.usage.completion_tokens,
+    #         "prompt_tokens": chat_completion.usage.prompt_tokens,
+    #         "total_tokens": chat_completion.usage.total_tokens
+    #     }
+    # }
