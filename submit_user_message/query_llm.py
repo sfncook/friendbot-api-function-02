@@ -153,7 +153,7 @@ def query_llm(user_msg, msgs, conversation_obj, avatar_name):
     messages += msgs
     messages.append({"role": "user", "content": f"{user_msg}"})
 
-    print(messages)
+    # print(messages)
 
     client = AzureOpenAI(
         azure_endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
