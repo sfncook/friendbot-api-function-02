@@ -1,0 +1,34 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "authLevel": "Anonymous",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": ["post", "options"]
+    },
+    {
+      "type": "cosmosDB",
+      "name": "newfeedback",
+      "direction": "out",
+      "databaseName": "keli",
+      "containerName": "feedback",
+      "connection": "AzureCosmosDBConnection"
+    },
+    {
+      "name": "prevmessages",
+      "direction": "in",
+      "type": "cosmosDB",
+      "connection": "AzureCosmosDBConnection",
+      "databaseName": "keli",
+      "containerName": "messages",
+      "sqlQuery": "SELECT TOP 1 * FROM m WHERE m.conversation_id = {convoid} ORDER BY m.timestamp ASC"
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "$return"
+    }
+  ]
+}
